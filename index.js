@@ -1,25 +1,63 @@
-let url = 'https://gateway.marvel.com:443/v1/public/characters?name=spider-man&apikey=3338f4249d18ec22b5adfdf280af3dca';
+const baseUrl = 'https://api.pexels.com/v1/';
+const apiKey = '563492ad6f917000010000012b411f04bd584cafb559dd43e898bf4e';
+let userInput = '';
 
-function displayResults(responseJson) {
-    console.log(responseJson);
-};
+//example query: https://api.pexels.com/v1/search?query=Nature
 
-function foofoo() {
-    fetch(url)
-        .then(response => {
-        if (response.ok) {
-            $('#js-error-message').empty(); //removes any text if there was any from the previous unsuccesfull search)
-
-            return response.json();
-        }
-        throw new Error(response.statusText);
-        })
-        .then(responseJson => displayResults(responseJson))
-        .catch(err => {
-        $('#js-error-message').text(`Something went wrong: ${err.message}`);
-        $('#results-list').empty();
-        });
+function createSearchUrl(queryString)  {
+    return baseUrl + 'search?' + queryString;
 }
 
-$(foofoo);
+function handlePexelPicture()   {
+    $('form').submit(event => {
+        event.preventDefault();
+        userInput = $('#js-mood-picker').val();
+        getPexelPicture(userInput);
+        $('#js-mood-picker').val('')
+      });
+}
+
+//need to add safeSearch function
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+function displayResults(responseJson) {
+    const randomImageIndex = getRandomInt(responseJson.photos.length - 1);
+    console.log(responseJson);    
+    console.log(responseJson.total_results);  
+    $('#results').empty()       //if there are previous results, remove them
+        .removeClass('hidden')
+        .html(`<img src="${responseJson.photos[randomImageIndex].src.large}">`);
+};
+  
+function formatQueryParams(params) {
+    const queryItems = Object.keys(params)
+        .map(key => `${key}=${params[key]}`)
+    return queryItems.join('&');
+}
+
+function getPexelPicture(userSearch) {    
+    const params = {
+        query : userSearch,
+        page: 1,
+        per_page: 10        
+    }
+    const queryString = formatQueryParams(params);
+    const url = createSearchUrl(queryString);  
+    const options = {
+        headers: new Headers({
+        "Authorization": apiKey
+        })
+    };
+
+    fetch(url, options)
+        .then(response => response.json())
+        .then(responseJson => displayResults(responseJson)); // add a case when it doesn't give any results
+}
+
+$(function() {
+    handlePexelPicture();
+});
 
